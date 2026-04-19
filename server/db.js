@@ -57,7 +57,7 @@ export function leerPosts(idUsuario) {
         conexion = objConexion;
         let coleccion = conexion.db("instagram_planner").collection("posts");
         // convierte idUsuario a ObjectId para que coincida con el tipo en MongoDB
-        return coleccion.find({ usuario: new ObjectId(idUsuario) }).sort({ order: 1 }).toArray();
+        return coleccion.find({ usuario: new ObjectId(idUsuario) }).sort({ order: -1 }).toArray();
       }) 
       .then(posts => ok(posts))
       .catch(() => ko({ error: "error en bbdd" }))

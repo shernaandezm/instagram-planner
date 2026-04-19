@@ -4,19 +4,28 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
+import { ObjectId } from "mongodb";
 import { leerPosts, crearPost, borrarPost, actualizarCaption, reordenarPosts, buscarUsuario, crearUsuario } from "./db.js"
 import multer from "multer";
 import path from "path";
 import bcrypt from "bcrypt";
 
-// Multer config
+// Multer config - configuración de dónde y cómo se guardan los archivos que se suben
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); // le da un nombre único a cada archivo, con la extensión original (.jpg,.png..)
   }
 });
-const upload = multer({ storage });
+
+//Filtro para aceptar sólo imágenes y vídeos
+const fileFilter = (req, file, cb) => {
+  let tiposPermitidos = /jpeg|jpg|png|gif|webp|mp4|mov|avi/;
+  let esValido = tiposPermitidos.test(path.extname(file.originalname).toLowerCase());
+  esValido ? cb(null, true) : cb(new Error("Tipo de archivo no permitido"));
+}
+
+const upload = multer({ storage, fileFilter });
 
 // Middleware verificar token
 async function verificar(peticion, respuesta, siguiente) {
@@ -35,23 +44,14 @@ async function verificar(peticion, respuesta, siguiente) {
   }
 }
 
-// Crear usuario admin por defecto
-bcrypt.hash("admin123", 10).then(hash => {
-  buscarUsuario("admin").then(existe => {
-    if (!existe) {
-      crearUsuario({ usuario: "admin", password: hash })
-      console.log("Usuario admin creado")
-    }
-  })
-})
 
 const servidor = express();
 
-servidor.use(cors());
-servidor.use(express.json());
-servidor.use("/uploads", express.static("uploads"));
+servidor.use(cors());  //permite peticiones desde el frontend
+servidor.use(express.json()); // permite leer JSON en el body
+servidor.use("/uploads", express.static("uploads")); // sirve los archivos subidos
 
-// Login
+// Iniciar sesión 
 servidor.post("/login", async (peticion, respuesta) => {
   let { usuario, password } = peticion.body;
 
@@ -82,7 +82,7 @@ servidor.post("/login", async (peticion, respuesta) => {
   }
 });
 
-// Registro
+// Registro - Crear nueva cuenta 
 servidor.post("/registro", async (peticion, respuesta) => {
   let { usuario, password } = peticion.body;
 
@@ -99,7 +99,6 @@ servidor.post("/registro", async (peticion, respuesta) => {
 
     let hash = await bcrypt.hash(password, 10);
     await crearUsuario({ usuario, password: hash });
-
     respuesta.sendStatus(201);
 
   } catch (e) {
@@ -108,9 +107,10 @@ servidor.post("/registro", async (peticion, respuesta) => {
   }
 });
 
+// A partir de aquí todas las rutas requieren token validado
 servidor.use(verificar);
 
-// Obtener posts
+// Obtener posts del usuario
 servidor.get("/posts", async (peticion, respuesta) => {
   try {
     let posts = await leerPosts(peticion.usuario);
@@ -121,37 +121,17 @@ servidor.get("/posts", async (peticion, respuesta) => {
   }
 });
 
-// Crear post
-servidor.post("/posts", upload.single("image"), async (peticion, respuesta) => {
+// Crear post con uno o varios archivos 
+servidor.post("/posts", upload.array("archivos", 10), async (peticion, respuesta) => {
   try {
     let { caption } = peticion.body;
-    let imageUrl = `/uploads/${peticion.file.filename}`;
-    let usuario = peticion.usuario;
+    // genera un array con las rutas de todos los archivos subidos
+    let archivos = peticion.files.map(f => `/uploads/${f.filename}`);
+    let usuario = new ObjectId(peticion.usuario);
 
-    let id = await crearPost({ imageUrl, caption, usuario });
+    let id = await crearPost({ archivos, caption, usuario, order: 0 });
 
     respuesta.json({ id });
-  } catch (e) {
-    respuesta.status(500);
-    respuesta.json({ error: "error en el servidor" });
-  }
-});
-
-// Actualizar caption
-servidor.patch("/posts/:id", async (peticion, respuesta, siguiente) => {
-  try {
-    let { existe, cambio } = await actualizarCaption(peticion.params.id, peticion.body.caption, peticion.usuario);
-
-    if (cambio) {
-      return respuesta.sendStatus(204);
-    }
-
-    if (existe) {
-      return respuesta.json({ info: "no se actualizó el recurso" });
-    }
-
-    siguiente();
-
   } catch (e) {
     respuesta.status(500);
     respuesta.json({ error: "error en el servidor" });
@@ -169,15 +149,13 @@ servidor.patch("/posts/reorder", async (peticion, respuesta) => {
   }
 });
 
-// Borrar post
-servidor.delete("/posts/:id", async (peticion, respuesta, siguiente) => {
+// Actualizar pie de foto de un post 
+servidor.patch("/posts/:id", async (peticion, respuesta, siguiente) => {
   try {
-    let cantidad = await borrarPost(peticion.params.id, peticion.usuario);
+    let { existe, cambio } = await actualizarCaption(peticion.params.id, peticion.body.caption, peticion.usuario);
 
-    if (cantidad) {
-      return respuesta.sendStatus(204);
-    }
-
+    if (cambio) return respuesta.sendStatus(204);
+    if (existe) return respuesta.json({ info: "no se actualizó el recurso" });
     siguiente();
 
   } catch (e) {
@@ -186,11 +164,25 @@ servidor.delete("/posts/:id", async (peticion, respuesta, siguiente) => {
   }
 });
 
+// Eliminar post verificando que pertenece al usuario
+servidor.delete("/posts/:id", async (peticion, respuesta, siguiente) => {
+  try {
+    let cantidad = await borrarPost(peticion.params.id, peticion.usuario);
+    if (cantidad) return respuesta.sendStatus(204);
+    siguiente();
+  } catch (e) {
+    respuesta.status(500);
+    respuesta.json({ error: "error en el servidor" });
+  }
+});
+
+//Captura de errores generales
 servidor.use((error, peticion, respuesta, siguiente) => {
   respuesta.status(400);
   respuesta.json({ error: "error en la petición" });
 });
 
+//Captura de rutas que no existen
 servidor.use((peticion, respuesta) => {
   respuesta.status(404);
   respuesta.json({ error: "recurso no encontrado" });

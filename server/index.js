@@ -129,7 +129,7 @@ servidor.post("/posts", upload.array("archivos", 10), async (peticion, respuesta
     let archivos = peticion.files.map(f => f.path); // URL de Cloudinary
     let usuario = new ObjectId(peticion.usuario);
 
-    let id = await crearPost({ archivos, caption, usuario, order: Date.now() });
+    let id = await crearPost({ archivos, caption, usuario, order: 0 });
 
     respuesta.json({ id });
   } catch (e) {

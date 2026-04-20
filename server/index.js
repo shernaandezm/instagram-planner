@@ -5,27 +5,30 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
-import { leerPosts, crearPost, borrarPost, actualizarCaption, reordenarPosts, buscarUsuario, crearUsuario } from "./db.js"
+import { leerPosts, crearPost, borrarPost, actualizarCaption, reordenarPosts, buscarUsuario, crearUsuario } from "./db.js";
 import multer from "multer";
-import path from "path";
 import bcrypt from "bcrypt";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-// Multer config - configuración de dónde y cómo se guardan los archivos que se suben
-const storage = multer.diskStorage({
-  destination: "uploads/",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // nombre único con extensión original
+// Configuración de Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Multer config - sube los archivos directamente a Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "instagram_planner",
+    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp", "mp4", "mov", "avi"],
+    resource_type: "auto" // detecta automáticamente si es imagen o vídeo
   }
 });
 
-// Filtro para aceptar sólo imágenes y vídeos
-const fileFilter = (req, file, cb) => {
-  let tiposPermitidos = /jpeg|jpg|png|gif|webp|mp4|mov|avi/;
-  let esValido = tiposPermitidos.test(path.extname(file.originalname).toLowerCase());
-  esValido ? cb(null, true) : cb(new Error("Tipo de archivo no permitido"));
-}
-
-const upload = multer({ storage, fileFilter });
+const upload = multer({ storage });
 
 // Middleware: verifica que el token JWT es válido
 async function verificar(peticion, respuesta, siguiente) {
@@ -46,9 +49,8 @@ async function verificar(peticion, respuesta, siguiente) {
 
 const servidor = express();
 
-servidor.use(cors({ origin: process.env.CLIENT_URL })); // permite peticiones desde el frontend
-servidor.use(express.json()); // permite leer JSON en el body
-servidor.use("/uploads", express.static("uploads")); // sirve los archivos subidos
+servidor.use(cors({ origin: process.env.CLIENT_URL }));
+servidor.use(express.json());
 
 // Iniciar sesión
 servidor.post("/login", async (peticion, respuesta) => {
@@ -116,7 +118,7 @@ servidor.get("/posts", async (peticion, respuesta) => {
   }
 });
 
-// Crear post con uno o varios archivos
+// Crear post con uno o varios archivos - las URLs las devuelve Cloudinary
 servidor.post("/posts", upload.array("archivos", 10), async (peticion, respuesta) => {
   try {
     if (!peticion.files || peticion.files.length === 0) {
@@ -124,8 +126,7 @@ servidor.post("/posts", upload.array("archivos", 10), async (peticion, respuesta
     }
 
     let { caption } = peticion.body;
-    // genera un array con las rutas de todos los archivos subidos
-    let archivos = peticion.files.map(f => `/uploads/${f.filename}`);
+    let archivos = peticion.files.map(f => f.path); // URL de Cloudinary
     let usuario = new ObjectId(peticion.usuario);
 
     let id = await crearPost({ archivos, caption, usuario, order: Date.now() });

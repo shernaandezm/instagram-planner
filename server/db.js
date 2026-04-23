@@ -29,25 +29,6 @@ export function buscarUsuario(nombreUsuario) {
   });
 }
 
-// Crear usuario - Inserta un nuevo usuario en la colección users
-export function crearUsuario(objUsuario) {
-  return new Promise((ok, ko) => {
-    let conexion = null;
-    conectar()
-      .then(objConexion => {
-        conexion = objConexion;
-        let coleccion = conexion.db("instagram_planner").collection("users");
-        return coleccion.insertOne(objUsuario);
-      })
-      .then(({ insertedId }) => ok(insertedId)) // devuelve el id del usuario creado
-      .catch(() => ko({ error: "error en bbdd" }))
-      .finally(() => {
-        if (conexion) conexion.close();
-      });
-  });
-}
-
-
 // Obtiene todos los posts del usuario ordenados por el campo order
 export function leerPosts(idUsuario) {
   return new Promise((ok, ko) => {

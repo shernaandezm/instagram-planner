@@ -5,7 +5,7 @@ import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
-import { leerPosts, crearPost, borrarPost, actualizarCaption, reordenarPosts, buscarUsuario, crearUsuario } from "./db.js";
+import { leerPosts, crearPost, borrarPost, actualizarCaption, reordenarPosts, buscarUsuario } from "./db.js";
 import multer from "multer";
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from "cloudinary";
@@ -75,30 +75,6 @@ servidor.post("/login", async (peticion, respuesta) => {
 
     let token = jwt.sign({ id: posibleUsuario._id }, process.env.SECRET);
     respuesta.json({ token, usuario: posibleUsuario.usuario });
-
-  } catch (e) {
-    respuesta.status(500).json({ error: "Error en el servidor" });
-  }
-});
-
-// Registro - Crear nueva cuenta
-servidor.post("/registro", async (peticion, respuesta) => {
-  let { usuario, password } = peticion.body;
-
-  if (!usuario?.trim() || !password?.trim()) {
-    return respuesta.status(403).json({ error: "Datos incompletos" });
-  }
-
-  try {
-    let existe = await buscarUsuario(usuario);
-
-    if (existe) {
-      return respuesta.status(400).json({ error: "El usuario ya existe" });
-    }
-
-    let hash = await bcrypt.hash(password, 10);
-    await crearUsuario({ usuario, password: hash });
-    respuesta.sendStatus(201);
 
   } catch (e) {
     respuesta.status(500).json({ error: "Error en el servidor" });

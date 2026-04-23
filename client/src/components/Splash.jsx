@@ -1,18 +1,11 @@
 import { useEffect, useState } from "react";
 
 function Splash({ onFinish }) {
-  let [saliendo, setSaliendo] = useState(false);
+  let [saliendo, setSaliendo] = useState(false); // controla si la animación de salida está activa
 
   useEffect(() => {
-    // después de 1.8s empieza la animación de salida
-    let timer1 = setTimeout(() => setSaliendo(true), 1800);
-    // después de 2.4s llama a onFinish para mostrar el login
-    let timer2 = setTimeout(() => onFinish(), 2400);
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+    setTimeout(() => setSaliendo(true), 1800);  // después de 1.8s empieza la animación de salida
+    setTimeout(() => onFinish(), 2400);          // después de 2.4s muestra el login o el feed
   }, []);
 
   return (

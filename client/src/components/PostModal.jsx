@@ -3,29 +3,35 @@ import { createPortal } from "react-dom";
 import Contexto from "../Contexto";
 
 function PostModal({ post, onClose }) {
-  let { username } = useContext(Contexto);
-  let [indice, setIndice] = useState(0);
+  let { username } = useContext(Contexto); // para mostrar el nombre de usuario en el modal
+  let [indice, setIndice] = useState(0);   // archivo activo en el carrusel del modal
 
+  // Devuelve la URL del archivo activo
   function archivoActual() {
     return post.archivos[indice];
   }
 
+  // Detecta si el archivo es un vídeo por su URL de Cloudinary
   function esVideo(src) {
     return src.includes("/video/") || src.includes(".mp4") || src.includes(".mov") || src.includes(".avi");
   }
 
-  // createPortal renderiza el modal directamente en el body,
-  // fuera del árbol del post_card — así los eventos no se propagan al padre
+  // createPortal renderiza el modal fuera del árbol de PostCard, directamente en el body
+  // Esto evita que los clicks del modal se propaguen al div draggable padre y vuelvan a abrirlo
   return createPortal(
     <div className="modal_overlay" onClick={onClose}>
+
+      {/* stopPropagation evita que el click dentro del modal cierre el overlay */}
       <div className="modal_content" onClick={e => e.stopPropagation()}>
 
         <div className="modal_media">
+          {/* muestra vídeo o imagen según el tipo de archivo */}
           {esVideo(post.archivos[indice])
             ? <video src={archivoActual()} controls />
-            : <img src={archivoActual()} alt={post.caption} loading="lazy"/>
+            : <img src={archivoActual()} alt={post.caption} loading="lazy" />
           }
 
+          {/* carrusel — solo si el post tiene más de un archivo */}
           {post.archivos.length > 1 && (
             <>
               <button

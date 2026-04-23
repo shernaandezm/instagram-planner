@@ -4,26 +4,25 @@ import Contexto from "../Contexto";
 function AddPost({ posts, setPosts }) {
   let { token } = useContext(Contexto);
 
-  let [imagenes, setImagenes] = useState([]);
+  let [imagenes, setImagenes] = useState([]);       // archivos originales a subir
   let [caption, setCaption] = useState("");
-  let [previews, setPreviews] = useState([]);
-  let [cargando, setCargando] = useState(false);
-  let [indicePreview, setIndicePreview] = useState(0);
-  let [errorSubida, setErrorSubida] = useState(""); // mensaje de error si falla la subida
+  let [previews, setPreviews] = useState([]);        // URLs temporales para mostrar la preview
+  let [cargando, setCargando] = useState(false);     // desactiva el botón mientras se sube
+  let [indicePreview, setIndicePreview] = useState(0); // archivo activo en el carrusel de preview
+  let [errorSubida, setErrorSubida] = useState("");  // mensaje de error si falla la subida
 
-  // Convierte los archivos seleccionados en URLs locales para mostrar la preview
+  // Convierte los archivos seleccionados en URLs temporales del navegador para mostrar la preview sin subirlos al servidor todavía
   function handleImagen(evento) {
     let files = Array.from(evento.target.files);
     if (files.length > 0) {
       setImagenes(files);
-      setPreviews(files.map(f => URL.createObjectURL(f)));
+      setPreviews(files.map(f => URL.createObjectURL(f))); // crea una URL temporal en memoria
       setIndicePreview(0);
-      setErrorSubida(""); // limpia el error al seleccionar nuevas imágenes
+      setErrorSubida("");
     }
   }
 
-  // Reordena las imágenes usando drag & drop en las miniaturas
-  // Mueve tanto el archivo original como su preview para mantenerlos sincronizados
+  // Reordena las imágenes con drag & drop antes de publicar. Mueve el archivo original y preview para mantenerlos sincronizados
   function moverImagen(desde, hasta) {
     let nuevasImagenes = [...imagenes];
     let nuevasPreviews = [...previews];
@@ -44,9 +43,9 @@ function AddPost({ posts, setPosts }) {
     setCargando(true);
     setErrorSubida("");
 
-    // FormData permite enviar archivos junto con texto en una misma petición
+    // FormData permite enviar archivos binarios junto con texto en una misma petición
     let formData = new FormData();
-    imagenes.forEach(file => formData.append("archivos", file));
+    imagenes.forEach(file => formData.append("archivos", file)); // añade cada archivo con el mismo nombre de campo
     formData.append("caption", caption);
 
     fetch(import.meta.env.VITE_API_URL + "/posts", {
@@ -56,6 +55,7 @@ function AddPost({ posts, setPosts }) {
     })
     .then(respuesta => respuesta.json())
     .then(() => {
+      // recarga todos los posts desde el servidor para garantizar que el feed está sincronizado
       return fetch(import.meta.env.VITE_API_URL + "/posts", {
         headers: { Authorization: "Bearer " + token }
       });
@@ -63,6 +63,7 @@ function AddPost({ posts, setPosts }) {
     .then(res => res.json())
     .then(posts => {
       setPosts(posts);
+      // resetea el formulario
       setImagenes([]);
       setCaption("");
       setPreviews([]);
@@ -70,7 +71,6 @@ function AddPost({ posts, setPosts }) {
       setCargando(false);
     })
     .catch(() => {
-      // muestra un mensaje de error si falla la subida
       setErrorSubida("Error al subir el post, inténtalo de nuevo");
       setCargando(false);
     });
@@ -82,13 +82,13 @@ function AddPost({ posts, setPosts }) {
         <div className="add_post_preview">
           {previews.length > 0 ? (
             <>
-              {/* muestra el archivo activo — imagen o vídeo según el tipo */}
+              {/* muestra imagen o vídeo según el tipo del archivo activo */}
               {imagenes[indicePreview]?.type.startsWith("video/")
                 ? <video src={previews[indicePreview]} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <img src={previews[indicePreview]} alt="preview" />
               }
 
-              {/* botones para navegar entre las previews si hay más de una imagen */}
+              {/* botones de navegación — solo si hay más de un archivo */}
               {previews.length > 1 && (
                 <>
                   <button type="button" className="carrusel_btn prev"
@@ -99,12 +99,12 @@ function AddPost({ posts, setPosts }) {
               )}
             </>
           ) : (
-            // placeholder que actúa como botón para abrir el selector de archivos
+            // el label activa el input oculto al hacer click
             <label htmlFor="image-input" className="upload_placeholder">
               + Añadir nueva publicación
             </label>
           )}
-          {/* input oculto — se activa al hacer click en el label */}
+          {/* input oculto — se activa al hacer click en el label de arriba */}
           <input
             id="image-input"
             type="file"
@@ -115,7 +115,7 @@ function AddPost({ posts, setPosts }) {
           />
         </div>
 
-        {/* miniaturas arrastrables para reordenar las imágenes antes de publicar */}
+        {/* miniaturas arrastrables para reordenar los archivos antes de publicar */}
         {previews.length > 1 && (
           <div className="preview_thumbnails">
             {previews.map((src, i) => (
@@ -134,6 +134,7 @@ function AddPost({ posts, setPosts }) {
           </div>
         )}
 
+        {/* textarea y botón solo aparecen cuando hay archivos seleccionados */}
         {previews.length > 0 && (
           <>
             <textarea
@@ -141,10 +142,9 @@ function AddPost({ posts, setPosts }) {
               value={caption}
               onChange={evento => setCaption(evento.target.value)}
             />
-            {/* mensaje de error si falla la subida */}
             {errorSubida && <p className="error">{errorSubida}</p>}
             <button type="submit" disabled={cargando}>
-              {cargando ? "Subiendo..." : "Publicar"}
+              {cargando ? "Subiendo..." : "Publicar"} 
             </button>
           </>
         )}

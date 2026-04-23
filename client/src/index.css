@@ -28,7 +28,7 @@ body {
   color: var(--color-texto);
 }
 
-/* LOGIN */
+/* Login */
 
 .login_container {
   min-height: 100vh;
@@ -188,7 +188,7 @@ body {
   border-color: var(--color-lavanda);
 }
 
-/* LAYOUT PRINCIPAL */
+/* Layout principal */
 
 .app_main {
   padding: 2rem;
@@ -203,18 +203,8 @@ body {
   align-items: start;
 }
 
-/* FEED VACÍO */
+/* Feed vacío */
 
-.feed_cargando {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 400px;
-  color: var(--color-texto_suave);
-  font-size: 0.875rem;
-}
 .feed_vacio {
   display: flex;
   flex-direction: column;
@@ -248,7 +238,7 @@ body {
   line-height: 1.7;
 }
 
-/* FEED GRID */
+/* Feed grid */
 
 .feed_grid_wrapper {
   width: 100%;
@@ -262,7 +252,7 @@ body {
   overflow: hidden;
 }
 
-/* POST CARD */
+/* Post card */
 
 .post_card {
   position: relative;
@@ -298,7 +288,6 @@ body {
   transform: scale(1.02);
 }
 
-/* feedback visual al arrastrar un post encima de otro */
 .post_card.drag_over .post_image_wrapper {
   outline: 2px solid var(--color-malva);
   outline-offset: -2px;
@@ -384,7 +373,7 @@ body {
   background: var(--color-malva-oscuro);
 }
 
-/* SIDEBAR AÑADIR POST */
+/* Sidebar añadir post */
 
 .feed_sidebar {
   position: sticky;
@@ -472,7 +461,7 @@ body {
   background: var(--color-malva-oscuro);
 }
 
-/* NOTIFICACIÓN */
+/* Notificación */
 
 .notificacion {
   position: fixed;
@@ -488,7 +477,7 @@ body {
   animation: splash_entrar 0.3s ease forwards;
 }
 
-/* CARRUSEL */
+/* Carrusel */
 
 .carrusel_btn {
   position: absolute;
@@ -532,7 +521,7 @@ body {
   background: var(--color-blanco);
 }
 
-/* MODAL */
+/* Modal */
 
 .modal_overlay {
   position: fixed;
@@ -633,7 +622,7 @@ body {
   line-height: 1.6;
 }
 
-/* PREVIEW THUMBNAILS */
+/* Preview thumbnails */
 
 .preview_thumbnails {
   display: flex;
@@ -664,7 +653,7 @@ body {
   object-fit: cover;
 }
 
-/* SPLASH */
+/* Splash */
 
 .splash_container {
   min-height: 100vh;
@@ -773,7 +762,7 @@ body {
   }
 
   .post_image_wrapper {
-    aspect-ratio: 1 / 1; /* cuadrado en móvil como Instagram */
+    aspect-ratio: 1 / 1; 
   }
 
   .preview_thumbnails {

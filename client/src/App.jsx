@@ -1,12 +1,12 @@
-import { useContext, useState } from 'react';
+import { useContext, useState } from 'react'; 
 import Contexto from './Contexto';
 import Login from './components/Login';
 import Feed from './components/Feed';
 import Splash from './components/Splash';
 
 function App() {
-  // Accede al token y al nombre de usuario del contexto global
-  const { token, setToken, setUsername, username } = useContext(Contexto);
+  // Accede al token y al nombre de usuario del contexto global para saber si el usuario está logueado o no
+  const { token, setToken, setUsername, username } = useContext(Contexto); 
   let [splashVisible, setSplashVisible] = useState(!localStorage.getItem('token')); // muestra el splash solo si no hay sesión activa
 
   // Elimina el token y el usuario de localStorage y resetea el estado global para volver al login
@@ -17,7 +17,8 @@ function App() {
     setUsername(null);
   }
 
-  // Muestra el splash antes del login
+  // Muestra el splash antes del login. 
+  // Cuando termina onFinish pone splashVisible en false y React re-renderiza para mostrar el login o el feed. 
   if (splashVisible) {
     return <Splash onFinish={() => setSplashVisible(false)} />;
   }

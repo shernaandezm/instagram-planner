@@ -21,14 +21,14 @@ function Login() {
           evento.preventDefault()
           setError("")
 
-          fetch(import.meta.env.VITE_API_URL + "/login", {
+          fetch(import.meta.env.VITE_API_URL + "/login", { // lee la variable de entorno del .env
             method: "POST",
             body: JSON.stringify({ usuario, password }),
             headers: { "Content-type": "application/json" }
           })
           .then(respuesta => {
             if (respuesta.status === 200) return respuesta.json()
-            throw respuesta.status
+            throw respuesta.status // si no es 200 lo captura el .catch
           })
           .then(({ token, usuario: nombreUsuario }) => {
             // guarda el token y el usuario en localStorage para persistir la sesión
@@ -54,7 +54,6 @@ function Login() {
             onChange={evento => setPassword(evento.target.value)}
             placeholder="Contraseña"
           />
-          {/* muestra el error solo si hay alguno */}
           {error && <p className="error">{error}</p>}
           <button type="submit">Entrar</button>
         </form>

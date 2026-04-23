@@ -5,7 +5,7 @@ import Contexto from "./Contexto"
 import './index.css'
 
 function Main() {
-  // estado global del usuario - se inicializa con lo que haya en localStorage. Si el usuario cierra y vuelve a abrir el navegador sigue logueado.
+  // estado global del usuario - se inicializa con lo que haya en localStorage. Si el usuario cierra y vuelve a abrir el navegador sigue logueado, si no, pasa a null.
   const [token, setToken] = useState(localStorage.getItem('token') || null)
   const [username, setUsername] = useState(localStorage.getItem('username') || null)
 

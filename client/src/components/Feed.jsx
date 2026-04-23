@@ -7,11 +7,11 @@ function Feed() {
   let { token } = useContext(Contexto)
 
   let [posts, setPosts] = useState([])
-  let [draggedIndex, setDraggedIndex] = useState(null)
-  let [dragOverIndex, setDragOverIndex] = useState(null)
-  let [notificacion, setNotificacion] = useState("")
-  let [cargando, setCargando] = useState(true) // muestra mensaje mientras el servidor responde
+  let [draggedIndex, setDraggedIndex] = useState(null)   // índice del post que se está arrastrando
+  let [dragOverIndex, setDragOverIndex] = useState(null) // índice del post sobre el que se arrastra
+  let [notificacion, setNotificacion] = useState("")     // mensaje de éxito o error al borrar
 
+  // carga los posts al montar el componente
   useEffect(() => {
     if (!token) return
 
@@ -22,15 +22,9 @@ function Feed() {
         if (!res.ok) throw new Error("Error al cargar posts")
         return res.json()
       })
-      .then(posts => {
-        setPosts(posts)
-        setCargando(false)
-      })
-      .catch(err => {
-        console.error(err)
-        setCargando(false)
-      })
-  }, [])
+      .then(posts => setPosts(posts))
+      .catch(err => console.error(err))
+  }, []) // array vacío — se ejecuta solo una vez al montar el componente
 
   function borrarPost(id) {
     if (!window.confirm("¿Seguro que quieres eliminar este post?")) return
@@ -41,35 +35,36 @@ function Feed() {
     })
     .then(res => {
       if (res.status === 204) {
-        setPosts(prev => prev.filter(p => p._id !== id))
+        setPosts(prev => prev.filter(p => p._id !== id)) // elimina el post del array sin recargar
         setNotificacion("Post eliminado correctamente")
-        setTimeout(() => setNotificacion(""), 3000)
+        setTimeout(() => setNotificacion(""), 3000) // oculta la notificación a los 3s
       }
     })
     .catch(() => setNotificacion("No se pudo eliminar el post"))
   }
 
   function handleDragStart(index) {
-    setDraggedIndex(index)
+    setDraggedIndex(index) // guarda qué post se empieza a arrastrar
   }
 
   function handleDragOver(evento, index) {
-    evento.preventDefault()
-    setDragOverIndex(index)
+    evento.preventDefault() // necesario para que el navegador permita soltar el elemento
+    setDragOverIndex(index) // guarda sobre qué post está pasando para el feedback visual
   }
 
   function handleDrop(index) {
     setDragOverIndex(null)
-    if (draggedIndex === null || draggedIndex === index) return
+    if (draggedIndex === null || draggedIndex === index) return // si se suelta en el mismo sitio no hace nada
 
-    let reordenados = [...posts]
-    let [movido] = reordenados.splice(draggedIndex, 1)
-    reordenados.splice(index, 0, movido)
+    let reordenados = [...posts]                              // copia el array para no mutar el estado
+    let [movido] = reordenados.splice(draggedIndex, 1)       // extrae el post arrastrado
+    reordenados.splice(index, 0, movido)                     // lo inserta en la nueva posición
 
-    let conOrden = reordenados.map((p, i) => ({ ...p, order: i }))
-    setPosts(conOrden)
+    let conOrden = reordenados.map((p, i) => ({ ...p, order: i })) // actualiza el campo order de cada post
+    setPosts(conOrden)   // actualiza el estado visual
     setDraggedIndex(null)
 
+    // persiste el nuevo orden en la base de datos
     fetch(import.meta.env.VITE_API_URL + "/posts/reorder", {
       method: "PATCH",
       headers: {
@@ -82,18 +77,12 @@ function Feed() {
 
   return (
     <>
-      {/* notificación que aparece al eliminar un post */}
+      {/* mensaje que aparece brevemente al eliminar un post */}
       {notificacion && <div className="notificacion">{notificacion}</div>}
 
       <div className="feed_layout">
         <div className="feed_grid_wrapper">
-          {cargando ? (
-            // mensaje mientras el servidor de Render arranca
-            <div className="feed_cargando">
-              <img src="/logo.svg" alt="logo" className="feed_vacio_logo" />
-              <p>Conectando con el servidor...</p>
-            </div>
-          ) : posts.length === 0 ? (
+          {posts.length === 0 ? (
             <div className="feed_vacio">
               <img src="/logo.svg" alt="logo" className="feed_vacio_logo" />
               <p>Tu feed está vacío</p>
@@ -110,7 +99,7 @@ function Feed() {
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                   onDelete={borrarPost}
-                  isDragOver={dragOverIndex === index}
+                  isDragOver={dragOverIndex === index} // prop para el feedback visual del drag
                 />
               ))}
             </div>

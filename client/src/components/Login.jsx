@@ -1,43 +1,40 @@
 import { useState, useContext } from "react"
-import Contexto from "../context/Contexto"
+import Contexto from "../Contexto"
 
 function Login() {
+  // Accede a las funciones del contexto global para guardar el token y el usuario
   let { setToken, setUsername } = useContext(Contexto)
 
+  // Estados del formulario
   let [usuario, setUsuario] = useState("")
   let [password, setPassword] = useState("")
-  let [esRegistro, setEsRegistro] = useState(false)
   let [error, setError] = useState("")
 
   return (
-    <div className="login-container">
-      <div className="login-box">
+    <div className="login_container">
+      <div className="login_box">
+        <img src="/logo.svg" alt="logo" className="login_logo" />
         <h1>Instagram Planner</h1>
-        <h2>{esRegistro ? "Crear cuenta" : "Iniciar sesión"}</h2>
+        <h2>Iniciar sesión</h2>
 
         <form onSubmit={evento => {
           evento.preventDefault()
           setError("")
 
-          let url = esRegistro ? "/registro" : "/login"
-
-          fetch(import.meta.env.VITE_API_URL + url, {
+          fetch(import.meta.env.VITE_API_URL + "/login", {
             method: "POST",
             body: JSON.stringify({ usuario, password }),
             headers: { "Content-type": "application/json" }
           })
           .then(respuesta => {
             if (respuesta.status === 200) return respuesta.json()
-            if (respuesta.status === 201) {
-              setEsRegistro(false)
-              setError("Usuario creado, ahora inicia sesión")
-              throw null
-            }
             throw respuesta.status
           })
           .then(({ token, usuario: nombreUsuario }) => {
+            // guarda el token y el usuario en localStorage para persistir la sesión
             localStorage.setItem("token", token)
             localStorage.setItem("username", nombreUsuario)
+            // actualiza el contexto global — la app pasa al feed
             setToken(token)
             setUsername(nombreUsuario)
           })
@@ -57,18 +54,10 @@ function Login() {
             onChange={evento => setPassword(evento.target.value)}
             placeholder="Contraseña"
           />
+          {/* muestra el error solo si hay alguno */}
           {error && <p className="error">{error}</p>}
-          <button type="submit">
-            {esRegistro ? "Registrarse" : "Entrar"}
-          </button>
+          <button type="submit">Entrar</button>
         </form>
-
-        <p className="toggle-auth" onClick={() => {
-          setEsRegistro(!esRegistro)
-          setError("")
-        }}>
-          {esRegistro ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate"}
-        </p>
       </div>
     </div>
   )

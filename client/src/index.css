@@ -258,7 +258,9 @@ body {
   position: relative;
   cursor: grab;
   width: 100%;
+  min-width: 0; 
   transition: transform 0.15s ease;
+  overflow: hidden;
 }
 
 .post_card:active {
@@ -318,7 +320,6 @@ body {
 
 .post_caption {
   padding: 6px 2px;
-  max-height: 40px;
   overflow: hidden;
 }
 
@@ -747,10 +748,6 @@ body {
     width: 100%;
     padding: 0.5rem;
     font-size: 0.75rem;
-  }
-
-  .post_card {
-  min-width: 0;
   }
 
   .feed_grid_wrapper {

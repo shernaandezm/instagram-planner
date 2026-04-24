@@ -21,8 +21,11 @@ function PostCard({ post, index, onDragStart, onDragOver, onDrop, onDelete, isDr
       body: JSON.stringify({ caption })
     })
     .then(respuesta => {
-      if (respuesta.status === 204) setEditando(false); // cierra el modo edición si se guardó bien
-    });
+      if (respuesta.status === 204 || respuesta.status === 200) {
+        setEditando(false); // cierra el modo edición
+      }
+    })
+    .catch(() => setEditando(false)); // cierra también si hay error
   }
 
   // Devuelve la URL del archivo activo — el operador ?. evita errores si archivos es undefined

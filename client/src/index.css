@@ -318,6 +318,8 @@ body {
 
 .post_caption {
   padding: 6px 2px;
+  max-height: 40px;
+  overflow: hidden;
 }
 
 .caption_view p {

@@ -59,7 +59,7 @@ function PostCard({ post, index, onDragStart, onDragOver, onDrop, onDelete, isDr
 
         {/* muestra vídeo o imagen según el tipo de archivo */}
         {esVideo(post.archivos?.[indice] || "")
-          ? <video src={archivoActual()} controls />
+          ? <video src={archivoActual()} controls controlsList="nofullscreen" />
           : <img
               src={archivoActual()}
               alt={post.caption}
@@ -118,7 +118,7 @@ function PostCard({ post, index, onDragStart, onDragOver, onDrop, onDelete, isDr
 
       {/* el modal se renderiza con createPortal fuera del árbol del componente
           para evitar problemas de propagación de eventos con el drag & drop */}
-      {modalAbierto && <PostModal post={post} onClose={cerrarModal} />}
+      {modalAbierto && <PostModal post={{...post, caption}} onClose={cerrarModal} />}
     </div>
   );
 }
